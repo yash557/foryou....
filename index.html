@@ -884,7 +884,7 @@
             <canvas id="sky-canvas"></canvas>
             <canvas id="tree-canvas"></canvas>
             <div id="letter-card">
-                <h2 style="margin-top:0; color: #fff;">To My Bestie,</h2>
+                <h2 style="margin-top:0; color: #fff;">To My Pookieee,</h2>
                 <div id="letter-content-tree"></div> <!-- Content injected here -->
                 <br>
                 <!-- NEW: This button opens the wish form -->
@@ -946,8 +946,8 @@
     <script>
         // --- 1. CONFIGURATION ---
         // === UPDATE THIS! ===
-        const MY_PHONE_NUMBER = "919876543210";
-        const MY_INSTAGRAM_USERNAME = "your_username";
+        const MY_PHONE_NUMBER = "919150095526";
+        const MY_INSTAGRAM_USERNAME = "_arafaxz_";
 
         const LOADING_TEXTS = [
             "> Initializing Friendship Protocol...",
@@ -957,8 +957,9 @@
             "> ACCESS GRANTED. HAPPY BIRTHDAY!"
         ];
 
-        const MY_LETTER = `Happy Birthday!!<br><br>vanakam da maplai, You know, when I think about us and everything we’ve been through, it honestly feels like a long-running series — full of drama, comedy, unexpected plot twists, and two characters who somehow never get tired of each other. Our bond has survived everything But lately… something feels a little different. 
+        const MY_LETTER = `Happy Kuva Kuva day!!<br><br> vanakam da maplai, You know, when I think about us and everything we’ve been through, it honestly feels like a long-running series — full of drama, comedy, unexpected plot twists, and two characters who somehow never get tired of each other. Our bond has survived everything But lately… something feels a little different. 
         Not bad, just… distant. Like we’re still in the same story, but the scenes aren’t as close as they used to be. And maybe it’s life being life, or maybe we’re just growing in different directions for a moment. Still, it’s a weird feeling, because I treasure what we have — the laughter, the chaos, the comfort, the spark.<br><br>If you want to say something you can reply in this😉!`;
+
         const SONGS = [
             { title: "Chill Vibes", artist: "Memories", file: "song1.mp3", emoji: "🌊" },
             { title: "Chaos Energy", artist: "Inside Jokes", file: "song2.mp3", emoji: "⚡" },
@@ -1177,6 +1178,8 @@
         const skyCtx = skyCanvas.getContext('2d');
         let width, height, startX, startY;
         let stars = [], meteors = [];
+        let activeBranches = [];
+        let treeAnimationId = null;
 
         function resizeTree() {
             width = treeCanvas.width = skyCanvas.width = window.innerWidth;
@@ -1196,9 +1199,19 @@
             initSky();
             ctx.clearRect(0, 0, width, height);
 
-            // Start Growth
+            // Draw Roots (Simple static draw for roots is fine)
             drawRoots(startX, startY);
-            drawBranch(startX, startY, 130, -Math.PI / 2, 16);
+
+            // Initialize Growth System
+            activeBranches = [];
+            // Start Trunk
+            activeBranches.push({
+                x: startX, y: startY, angle: -Math.PI / 2, length: 150, width: 20,
+                currentLength: 0, depth: 0, maxDepth: 12
+            });
+
+            if (treeAnimationId) cancelAnimationFrame(treeAnimationId);
+            animateTree();
         }
 
         function initSky() {
@@ -1225,7 +1238,7 @@
         }
 
         function animateSky() {
-            if (document.getElementById('tree-overlay').classList.contains('hidden')) return; // Stop if closed
+            if (document.getElementById('tree-overlay').classList.contains('hidden')) return;
             skyCtx.clearRect(0, 0, width, height);
             skyCtx.fillStyle = "white";
             stars.forEach(star => {
@@ -1251,39 +1264,67 @@
             }
         }
 
-        function drawBranch(x, y, len, ang, width) {
-            ctx.beginPath(); ctx.moveTo(x, y);
-            const endX = x + len * Math.cos(ang); const endY = y + len * Math.sin(ang);
-            ctx.lineTo(endX, endY);
-            const colorVal = 20 + (16 - width) * 5; ctx.strokeStyle = `hsl(25, 40%, ${colorVal}%)`;
-            ctx.lineWidth = width; ctx.lineCap = 'round'; ctx.stroke();
-            if (len < 10) { drawHearts(endX, endY); return; }
-            setTimeout(() => {
-                const subLen = len * 0.75; const subWidth = width * 0.7;
-                drawBranch(endX, endY, subLen, ang + Math.random() * 0.5, subWidth);
-                drawBranch(endX, endY, subLen, ang - Math.random() * 0.5, subWidth);
-                if (Math.random() > 0.3) { drawBranch(endX, endY, subLen * 0.8, ang, subWidth); }
-            }, 30);
+        // --- NEW ITERATIVE TREE ANIMATION LOOP ---
+        function animateTree() {
+            if (activeBranches.length === 0) {
+                // Done growing
+                if (!document.getElementById('scene-container').classList.contains('slide-left')) {
+                    setTimeout(triggerSlide, 500);
+                }
+                return;
+            }
+
+            for (let i = activeBranches.length - 1; i >= 0; i--) {
+                let branch = activeBranches[i];
+                let growthRate = 8; // Speed
+                let prevX = branch.x + Math.cos(branch.angle) * branch.currentLength;
+                let prevY = branch.y + Math.sin(branch.angle) * branch.currentLength;
+
+                branch.currentLength += growthRate;
+                if (branch.currentLength > branch.length) branch.currentLength = branch.length;
+
+                let currentX = branch.x + Math.cos(branch.angle) * branch.currentLength;
+                let currentY = branch.y + Math.sin(branch.angle) * branch.currentLength;
+
+                ctx.beginPath(); ctx.moveTo(prevX, prevY); ctx.lineTo(currentX, currentY);
+                ctx.lineWidth = branch.width;
+                let colorVal = 20 + (16 - branch.width) * 5; ctx.strokeStyle = `hsl(25, 40%, ${colorVal}%)`;
+                ctx.lineCap = 'round'; ctx.stroke();
+
+                if (branch.currentLength >= branch.length) {
+                    activeBranches.splice(i, 1);
+                    if (branch.depth < branch.maxDepth) {
+                        let numChildren = Math.random() > 0.3 ? 3 : 2;
+                        for (let j = 0; j < numChildren; j++) {
+                            let angleOffset = (Math.random() - 0.5) * 1.5;
+                            let newLength = branch.length * 0.75;
+                            let newWidth = branch.width * 0.7;
+                            if (newWidth < 1) newWidth = 1;
+                            activeBranches.push({
+                                x: currentX, y: currentY, angle: branch.angle + angleOffset,
+                                length: newLength, width: newWidth, currentLength: 0,
+                                depth: branch.depth + 1, maxDepth: branch.maxDepth
+                            });
+                        }
+                    } else {
+                        drawHeartsInstant(currentX, currentY);
+                    }
+                }
+            }
+            treeAnimationId = requestAnimationFrame(animateTree);
         }
 
-        let heartsDrawn = 0;
-        function drawHearts(x, y) {
+        function drawHeartsInstant(x, y) {
             for (let i = 0; i < 5; i++) {
-                setTimeout(() => {
-                    const size = Math.random() * 10 + 5; const hx = x + (Math.random() - 0.5) * 40; const hy = y + (Math.random() - 0.5) * 40;
-                    const color = `hsl(${320 + Math.random() * 40}, 100%, ${60 + Math.random() * 20}%)`;
-                    ctx.save(); ctx.translate(hx, hy); ctx.rotate(Math.random() * Math.PI); ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 10;
-                    ctx.beginPath(); ctx.moveTo(0, size * 0.3);
-                    ctx.bezierCurveTo(0, 0, -size / 2, 0, -size / 2, size * 0.3);
-                    ctx.bezierCurveTo(-size / 2, (size + size * 0.3) / 2, 0, size, 0, size * 1.3);
-                    ctx.bezierCurveTo(0, size, size / 2, (size + size * 0.3) / 2, size / 2, size * 0.3);
-                    ctx.bezierCurveTo(size / 2, 0, 0, 0, 0, size * 0.3);
-                    ctx.fill(); ctx.restore();
-                }, i * 10);
-            }
-            heartsDrawn++;
-            if (heartsDrawn > 100 && !document.getElementById('scene-container').classList.contains('slide-left')) {
-                setTimeout(triggerSlide, 1000);
+                const size = Math.random() * 10 + 5; const hx = x + (Math.random() - 0.5) * 40; const hy = y + (Math.random() - 0.5) * 40;
+                const color = `hsl(${320 + Math.random() * 40}, 100%, ${60 + Math.random() * 20}%)`;
+                ctx.save(); ctx.translate(hx, hy); ctx.rotate(Math.random() * Math.PI); ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 10;
+                ctx.beginPath(); ctx.moveTo(0, size * 0.3);
+                ctx.bezierCurveTo(0, 0, -size / 2, 0, -size / 2, size * 0.3);
+                ctx.bezierCurveTo(-size / 2, (size + size * 0.3) / 2, 0, size, 0, size * 1.3);
+                ctx.bezierCurveTo(0, size, size / 2, (size + size * 0.3) / 2, size / 2, size * 0.3);
+                ctx.bezierCurveTo(size / 2, 0, 0, 0, 0, size * 0.3);
+                ctx.fill(); ctx.restore();
             }
         }
 
